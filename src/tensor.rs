@@ -1,15 +1,18 @@
 use std::{slice, sync::Arc, vec};
 pub struct Tensor<T> {
-    data: Arc<Box<[T]>>,
-    shape: Vec<usize>,
-    offset: usize,
-    length: usize,
+    data: Arc<Box<[T]>>,   // data of the tensor
+    shape: Vec<usize>,     // shape of the tensor
+    offset: usize,         // offset of the tensor
+    length: usize,         // length of the tensor   
 }
 
 impl<T: Copy + Clone + Default> Tensor<T> {
     pub fn new(data: Vec<T>, shape: &Vec<usize>) -> Self {
         let length = data.len();
         Tensor {
+            // 这句代码将一个 Vec<T> 转换成了一个 Box<[T]>（堆分配的切片），
+            // 然后尝试将其转换成所需的类型（通过 try_into()），
+            // 接着用 Arc 进行包装，以便在多线程环境中共享。
             data: Arc::new(data.into_boxed_slice().try_into().unwrap()),
             shape: shape.clone(),
             offset: 0,
@@ -18,8 +21,11 @@ impl<T: Copy + Clone + Default> Tensor<T> {
     }
 
     pub fn default(shape: &Vec<usize>) -> Self {
+        // 根据shape计算出data的长度
         let length = shape.iter().product();
+        // 利用T的默认值构建一个长度为length的Vec
         let data = vec![T::default(); length];
+        // 调用new函数构建一个Tensor
         Self::new(data, shape)
     }
 

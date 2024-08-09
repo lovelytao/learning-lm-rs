@@ -74,16 +74,35 @@ pub fn rms_norm(y: &mut Tensor<f32>, x: &Tensor<f32>, w: &Tensor<f32>, epsilon: 
     todo!("实现 rms_norm，计算前做一些必要的检查会帮助你后续调试")
 }
 
+
+// sigmoid(x) = 1 / (1 + exp(-x))
+// pub fn sigmoid(y: &mut Tensor<f32>, x: &Tensor<f32>) {
+//     let len = y.size();
+//     assert!(len == x.size()); // 先判断一下这两俩矩阵形状是否相等
+
+//     let _y = unsafe { y.data_mut() };   // 获取 y 的数据
+//     let _x = x.data();                  // 获取 x 的数据
+//     for i in 0..len {
+//         _y[i] = 1.0 / (1.0 + (- _x[i]).exp());
+//     }
+// }
+
+
 // y = sigmoid(x) * x * y
 // hint: this is an element-wise operation
 pub fn silu(y: &mut Tensor<f32>, x: &Tensor<f32>) {
-    // let len = y.size();
-    // assert!(len == x.size());
+    let len = y.size();
+    assert!(len == x.size());
 
-    // let _y = unsafe { y.data_mut() };
-    // let _x = x.data();
+    let _y = unsafe { y.data_mut() };
+    let _x = x.data();
 
-    todo!("实现 silu，这里给了一些前期准备工作的提示，你可以参考")
+    // element-wise operation   逐元素操作
+    for i in 0..len {
+        let sigmoid = 1.0 / (1.0 + (- _x[i]).exp());
+        _y[i] = sigmoid * _x[i] * _y[i];
+    }
+
 }
 
 // C = beta * C + alpha * A @ B^T
