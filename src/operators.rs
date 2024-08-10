@@ -70,21 +70,42 @@ pub fn masked_softmax(y: &mut Tensor<f32>) {
     }
 }
 
+// 我这做的是简化版的rms_norm，只针对二维的情况
 pub fn rms_norm(y: &mut Tensor<f32>, x: &Tensor<f32>, w: &Tensor<f32>, epsilon: f32) {
-    todo!("实现 rms_norm，计算前做一些必要的检查会帮助你后续调试")
+
+    // todo!("实现 rms_norm，计算前做一些必要的检查会帮助你后续调试")
+
+    let len = y.size();
+    let n = *x.shape().last().unwrap();    // 最后一个维度的大小  这里last()返回的是Option，unwrap()返回的是引用，*解引用 
+    let _y = unsafe{y.data_mut()};
+    let _x = x.data();
+    let _w = w.data();
+    // let inv_stride : f32 = 1.0 / (stride as f32);
+
+    for i in (0..len).step_by(n) {  // 这是对的，循环一遍所有的元素
+        let mut rms : f32 = 0.0;
+        // let mut wx = 0.0;
+
+        for j in 0..n { 
+            rms += _x[i + j] * _x[i + j];
+
+            // // 计算 w * x_i
+            // wx += _w[j] * _x[i + j];
+        }
+        rms = rms / n as f32 + epsilon;
+        rms = rms.sqrt();
+        for j in 0..n {
+            _y[i + j] = _x[i + j] * _w[j] / rms;
+        }
+
+    }
+
 }
 
 
-// sigmoid(x) = 1 / (1 + exp(-x))
-// pub fn sigmoid(y: &mut Tensor<f32>, x: &Tensor<f32>) {
-//     let len = y.size();
-//     assert!(len == x.size()); // 先判断一下这两俩矩阵形状是否相等
+// // sigmoid(x) = 1 / (1 + exp(-x))
+// pub fn sigmoid(x:f32) -> f32 {
 
-//     let _y = unsafe { y.data_mut() };   // 获取 y 的数据
-//     let _x = x.data();                  // 获取 x 的数据
-//     for i in 0..len {
-//         _y[i] = 1.0 / (1.0 + (- _x[i]).exp());
-//     }
 // }
 
 
@@ -108,7 +129,28 @@ pub fn silu(y: &mut Tensor<f32>, x: &Tensor<f32>) {
 // C = beta * C + alpha * A @ B^T
 // hint: You don't need to do an explicit transpose of B
 pub fn matmul_transb(c: &mut Tensor<f32>, beta: f32, a: &Tensor<f32>, b: &Tensor<f32>, alpha: f32) {
-    todo!("实现 matmul_transb，计算前做一些必要的检查会帮助你后续调试");
+    // todo!("实现 matmul_transb，计算前做一些必要的检查会帮助你后续调试");
+    let c_shape = c.shape();
+    let a_shape = a.shape();
+    let b_shape = b.shape();
+    assert!(a_shape[1] == b_shape[1]);  // A = (m, k), B = (n, k)
+    assert!(c_shape[0] == a_shape[0]);
+    assert!(c_shape[1] == b_shape[0]);
+    let m = a_shape[0];
+    let k = a_shape[1];
+    let n = b_shape[0];
+    let _a = a.data();
+    let _b = b.data();
+    let _c = unsafe{c.data_mut()};
+    for i in 0..m {
+        for j in 0..n {
+            let mut sum = 0.0;
+            for t in 0..k {
+                sum += _a[i * k + t] * _b[j * k + t];
+            }
+            _c[i * n + j] = beta * _c[i * n + j] + alpha * sum;
+        }
+    }
 }
 
 // Dot product of two tensors (treated as vectors)
